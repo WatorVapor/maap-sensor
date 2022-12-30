@@ -25,8 +25,8 @@ void setup() {
 
   Serial.println(__DATE__);
   Serial.println(__TIME__);
-  xTaskCreatePinnedToCore(WifiMeshTask, "WifiMeshTask", 1024*32, nullptr, 1, nullptr,  0); 
-  xTaskCreatePinnedToCore(BLESettingTask, "BLESettingTask", 1024*32, nullptr, 1, nullptr,  0); 
+  xTaskCreatePinnedToCore(WifiMeshTask, "WifiMeshTask", 1024*8, nullptr, 1, nullptr,  0); 
+  xTaskCreatePinnedToCore(BLESettingTask, "BLESettingTask", 1024*8, nullptr, 1, nullptr,  0); 
 
   delay(5000);
   initUWB();

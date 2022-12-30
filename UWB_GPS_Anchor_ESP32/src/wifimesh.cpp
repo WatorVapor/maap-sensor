@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <mutex>
+#include <atomic>
 #include <string>
 #include "painlessMesh.h"
 #include "mbedtls/sha1.h"
@@ -18,10 +19,9 @@ static int16_t mesh_port;
 
 static Scheduler userScheduler;
 static painlessMesh  mesh;
-/*
+static std::atomic<bool> isConnectedMesh(false);
 static void sendMessage(void);
 static Task taskSendMessage( TASK_MILLISECOND * 10 , TASK_FOREVER, &sendMessage );
-*/
 
 static String device2MeshBuff;
 static std::mutex device2MeshBuffMtx;
@@ -29,6 +29,28 @@ static const size_t iConstBufferMax = 512;
 static StaticJsonDocument<512> mesh2DeviceDoc;
 static const size_t iConstMesh2DeviceBufferMax = 512 -64;
 
+
+static std::list<std::string> device2MeshLineBuffer;
+static std::mutex device2MeshLineBufferMtx;
+static const int iConstBufferLineMax = 8;
+
+
+void sendMessage(void) {
+  String msg;
+  {
+    std::lock_guard<std::mutex> lock(device2MeshLineBufferMtx);
+    if(device2MeshLineBuffer.empty()) {
+      return;
+    } else {
+      msg = String(device2MeshLineBuffer.front().c_str());
+      device2MeshLineBuffer.pop_front();
+    }
+  }
+  if(msg.isEmpty() == false) {
+    mesh.sendBroadcast( msg );
+  }
+  taskSendMessage.setInterval( random( TASK_MILLISECOND * 1, TASK_MILLISECOND * 5 ));
+}
 
 void receivedCallback( uint32_t from, String &msg ) {
   LOG_I(from);
@@ -48,16 +70,18 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 }
 
 void setup_wifi_mesh(void) {
-  mesh.setDebugMsgTypes( ERROR );
+  LOG_S(mesh_prefix);
+  LOG_S(mesh_password);
+  LOG_I(mesh_port);
+  mesh.setDebugMsgTypes( ERROR | STARTUP | MESH_STATUS | DEBUG);
   mesh.init( mesh_prefix, mesh_password, &userScheduler, mesh_port );
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
   mesh.onChangedConnections(&changedConnectionCallback);
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
-/*
+  isConnectedMesh = true;
   userScheduler.addTask( taskSendMessage );
   taskSendMessage.enable();
-*/
 }
 
 
@@ -78,6 +102,7 @@ std::string sha1Bin(byte *msg,size_t length);
 static String mining_address;
 static String mining_pub_key;
 static String mining_sec_key;
+
 
 void miningMeshAddress(void) {
   Serial.println("Waiting mining address ...");
@@ -132,9 +157,8 @@ void miningMeshAddress(void) {
   mining_sec_key = String(secKeyB64.c_str());
 }
 
-
+static std::string saveJsonBuff;
 void loadAddressConfig(void) {
-  SPIFFS.begin(true);
   std::string address = Prefix + "/config.address.json";
   auto isExists =  SPIFFS.exists(address.c_str());
   if(isExists) {
@@ -151,13 +175,13 @@ void loadAddressConfig(void) {
         LOG_I(error);
         if(error == DeserializationError::Ok) {
           if(meshReaddoc.containsKey("address")) {
-            mesh_address = meshReaddoc["address"].as<String>();
+            mesh_address = String(meshReaddoc["address"].as<String>());
           }
           if(meshReaddoc.containsKey("pub")) {
-            mesh_pub_key = meshReaddoc["pub"].as<String>();
+            mesh_pub_key = String(meshReaddoc["pub"].as<String>());
           }
           if(meshReaddoc.containsKey("sec")) {
-           mesh_sec_key = meshReaddoc["sec"].as<String>();
+           mesh_sec_key = String(meshReaddoc["sec"].as<String>());
           }
         }
       }
@@ -168,12 +192,12 @@ void loadAddressConfig(void) {
     meshSavedoc["address"] = mining_address;
     meshSavedoc["pub"] = mining_pub_key;
     meshSavedoc["sec"] = mining_sec_key;
-    std::string saveStr;
-    serializeJson(meshSavedoc, saveStr);
-    LOG_S(saveStr);
+    saveJsonBuff.clear();
+    serializeJson(meshSavedoc, saveJsonBuff);
+    LOG_S(saveJsonBuff);
     auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
     if(fs.available()) {
-      fs.print(saveStr.c_str());
+      fs.print(saveJsonBuff.c_str());
       fs.flush();
       fs.close();
     }
@@ -181,7 +205,6 @@ void loadAddressConfig(void) {
     mesh_pub_key = mining_pub_key;
     mesh_sec_key = mining_sec_key;
   }
-  SPIFFS.end();
   LOG_S(mesh_address);
   LOG_S(mesh_pub_key);
   LOG_S(mesh_sec_key);
@@ -192,7 +215,6 @@ void loadAddressConfig(void) {
 #define   MESH_PORT       5555
 
 void loadWifiMeshConfig(void) {
-  SPIFFS.begin(true);
   std::string settings = Prefix + "/config.wifi.mesh.json";
   auto isExists =  SPIFFS.exists(settings.c_str());
   if(isExists) {
@@ -209,10 +231,10 @@ void loadWifiMeshConfig(void) {
         LOG_I(error);
         if(error == DeserializationError::Ok) {
           if(meshReaddoc.containsKey("ssid")) {
-            mesh_prefix = meshReaddoc["ssid"].as<String>();
+            mesh_prefix = String(meshReaddoc["ssid"].as<String>());
           }
           if(meshReaddoc.containsKey("password")) {
-            mesh_password = meshReaddoc["password"].as<String>();
+            mesh_password = String(meshReaddoc["password"].as<String>());
           }
           if(meshReaddoc.containsKey("port")) {
            mesh_port = meshReaddoc["port"].as<int>();
@@ -225,12 +247,12 @@ void loadWifiMeshConfig(void) {
     meshSavedoc["ssid"] = MESH_PREFIX;
     meshSavedoc["password"] = MESH_PASSWORD;
     meshSavedoc["port"] = MESH_PORT;
-    std::string saveStr;
-    serializeJson(meshSavedoc, saveStr);
-    LOG_S(saveStr);
+    saveJsonBuff.clear();
+    serializeJson(meshSavedoc, saveJsonBuff);
+    LOG_S(saveJsonBuff);
     auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
     if(fs.available()) {
-      fs.print(saveStr.c_str());
+      fs.print(saveJsonBuff.c_str());
       fs.flush();
       fs.close();
     }
@@ -238,14 +260,13 @@ void loadWifiMeshConfig(void) {
     mesh_password = MESH_PASSWORD;
     mesh_port = MESH_PORT;
   }
-  SPIFFS.end();
-  LOG_S(mesh_prefix);
-  LOG_S(mesh_password);
-  LOG_I(mesh_port);
 }
 
 extern std::mutex gGpsLineMtx;
 extern std::list <std::string> gGPSLineBuff;
+
+
+static std::string jsonBuff;
 
 void transimitGps2Mesh(void) {
   std::lock_guard<std::mutex> lock(gGpsLineMtx);
@@ -255,24 +276,30 @@ void transimitGps2Mesh(void) {
     mesh2DeviceDoc.clear();
     mesh2DeviceDoc["gps"] = outLine;
     mesh2DeviceDoc["node"] = mesh_address;
-    std::string outStr;
-    serializeJson(mesh2DeviceDoc, outStr);
-    outStr += "\r\n";
-    String outStr_(outStr.c_str());
-    mesh.sendBroadcast( outStr_);
+    jsonBuff.clear();
+    serializeJson(mesh2DeviceDoc, jsonBuff);
+    jsonBuff += "\r\n";
+    std::lock_guard<std::mutex> lock(device2MeshLineBufferMtx);
+    if(device2MeshLineBuffer.size() >= iConstBufferLineMax) {
+      device2MeshLineBuffer.clear();
+    }
+    device2MeshLineBuffer.push_back(jsonBuff);
+    LOG_I(device2MeshLineBuffer.size());
     gGPSLineBuff.pop_front();
   }
 }
 
 
 void WifiMeshTask( void * parameter) {
+  SPIFFS.begin(true);
   loadAddressConfig();
   loadWifiMeshConfig();
+  SPIFFS.end();
   setup_wifi_mesh();
   while(true) {
     mesh.update();
     transimitGps2Mesh();
-    delay(10);
+    delay(1);
   }
 }
 

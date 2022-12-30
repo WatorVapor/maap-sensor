@@ -11,9 +11,7 @@ extern "C" {
   #include <tweetnacl.h>
 }
 #include "debug.hpp"
-#include "pref.hpp"
 
-static Preferences preferences;
 
 
 static unsigned char gBase64TempBinary[512];
@@ -31,6 +29,7 @@ extern String gPublicKey;
 
 static   byte gTempSignedMsg[1024];
 
+/*
 StaticJsonDocument<512> signMsg(StaticJsonDocument<512> &msg,const std::string &ts) {
   auto goodPref = preferences.begin(preferencesZone);
   DUMP_I(goodPref);
@@ -67,6 +66,7 @@ StaticJsonDocument<512> signMsg(StaticJsonDocument<512> &msg,const std::string &
   }
   return signedDoc;
 }
+*/
 
 bool verifySign(const std::string &pub,const std::string &sign,const std::string &sha){
   DUMP_S(pub);
@@ -154,13 +154,6 @@ std::string sha1Address(byte *msg,size_t length) {
   return result;
 }
 
-static void savePref2(const char * key,const std::string &value){
-  LOG_SC(key);
-  LOG_S(value);
-  auto retPref = preferences.putString(key,value.c_str());
-  LOG_I(retPref);
-  return;
-}
 
 void miningAddress(void) {
   Serial.println("Waiting mining address ...");
@@ -210,11 +203,5 @@ void miningAddress(void) {
   LOG_I(b64Ret2);
   std::string secKeyB64((char*)secretKeyB64,b64Ret2);
   LOG_S(secKeyB64);
-  auto goodPref = preferences.begin(preferencesZone);
-  LOG_I(goodPref);
-  savePref2(strConstEdtokenAddressKey,address);
-  savePref2(strConstEdtokenPublicKey,pubKeyB64);
-  savePref2(strConstEdtokenSecretKey,secKeyB64);
-  preferences.end();
 }
 

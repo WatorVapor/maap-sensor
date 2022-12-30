@@ -2,7 +2,6 @@
 #include <ArduinoJson.h>
 #include <Preferences.h>
 #include "debug.hpp"
-#include "pref.hpp"
 
 static Preferences preferences;
 
@@ -12,6 +11,7 @@ void runUWBAtCommand(const std::string&At);
 
 #define UWB_ Serial2
 void initUWB(void) {
+  /*
   auto goodPref = preferences.begin(preferencesZone);
   LOG_I(goodPref);
   gUWBMode = preferences.getInt(strConstUWBModeKey);
@@ -34,4 +34,5 @@ void initUWB(void) {
   } else {
     UWB_.print("AT+switchdis=0\r\n");
   }
+  */
 }
