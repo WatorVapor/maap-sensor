@@ -107,3 +107,4 @@ void loop() {
   }
   isPreferenceAllow = true;
 }
+std::mutex print_mtx_;

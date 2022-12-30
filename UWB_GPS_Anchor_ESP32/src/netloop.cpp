@@ -2,9 +2,6 @@
 #include <ArduinoJson.h>
 #include <map>
 #include <list>
-#include <WiFi.h>
-#include <PubSubClient.h>
-
 #include <Preferences.h>
 
 #include "mbedtls/sha1.h"
