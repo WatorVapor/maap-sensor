@@ -3,15 +3,10 @@
 #include <mutex>
 #include <list>
 #include "debug.hpp"
-
 void WifiMeshTask( void * parameter);
 void BLESettingTask( void * parameter);
-
 #define GPS_ Serial1
 #define UWB_ Serial2
-
-void BLETask( void * parameter);
-void NetWorkTask( void * parameter);
 void initUWB(void);
 
 static const int GPS_TX_PIN = 27; 
@@ -49,6 +44,9 @@ static std::string uwbLine;
 std::mutex gUWBLineMtx;
 std::list <std::string> gUWBLineBuff;
 
+static const int iConstLineBuffMax = 8;
+
+
 //#define UART_DIR_GPS 1
 #define UART_DIR_UWB 1
 
@@ -74,6 +72,10 @@ void loop() {
     }
     if(ch == '\n') {
       std::lock_guard<std::mutex> lock(gGpsLineMtx);
+      DUMP_I(gGPSLineBuff.size());
+      if(gGPSLineBuff.size() >= iConstLineBuffMax) {
+        gGPSLineBuff.clear();
+      }
       gGPSLineBuff.push_back(gpsLine);
       gpsLine.clear();
     }
@@ -92,6 +94,10 @@ void loop() {
     }
     if(ch == '\n') {
       std::lock_guard<std::mutex> lock(gUWBLineMtx);
+      DUMP_I(gUWBLineBuff.size());
+      if(gUWBLineBuff.size() >= iConstLineBuffMax) {
+        gUWBLineBuff.clear();
+      }
       gUWBLineBuff.push_back(uwbLine);
       uwbLine.clear();   
     }
