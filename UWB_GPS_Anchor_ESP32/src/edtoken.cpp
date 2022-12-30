@@ -36,14 +36,14 @@ StaticJsonDocument<512> signMsg(StaticJsonDocument<512> &msg,const std::string &
   DUMP_I(goodPref);
   auto secretKey = preferences.getString(strConstEdtokenSecretKey);
   preferences.end();
-  int secretRet = decode_base64((unsigned char*)secretKey.c_str(),secretKey.length(),gBase64TempBinary);
+  int secretRet = my_decode_base64((unsigned char*)secretKey.c_str(),secretKey.length(),gBase64TempBinary);
   DUMP_I(secretRet);
   msg["ts"] = ts;
   String origMsgStr;
   serializeJson(msg, origMsgStr);
   auto hashRet = crypto_hash_sha512(gCalcTempHash,(unsigned char*)origMsgStr.c_str(),origMsgStr.length());
   DUMP_I(hashRet);
-  int b64Ret1 = encode_base64(gCalcTempHash,SHA512_HASH_BIN_MAX,gBase64TempBinary);
+  int b64Ret1 = my_encode_base64(gCalcTempHash,SHA512_HASH_BIN_MAX,gBase64TempBinary);
   DUMP_I(b64Ret1);
   std::string calHashB64((char*)gBase64TempBinary,b64Ret1);
   DUMP_S(calHashB64);
@@ -55,7 +55,7 @@ StaticJsonDocument<512> signMsg(StaticJsonDocument<512> &msg,const std::string &
   int signRet = crypto_sign(gTempSignedMsg,(uint64_t*)&signedSize,(byte*)sha1.c_str(),sha1.length(),gSecretKeyBin);
   DUMP_I(signRet);
   DUMP_I(signedSize);
-  int b64Ret2 = encode_base64(gTempSignedMsg,signedSize,gBase64TempBinary);
+  int b64Ret2 = my_encode_base64(gTempSignedMsg,signedSize,gBase64TempBinary);
   std::string signedB64((char*)gBase64TempBinary,b64Ret2);
   DUMP_S(signedB64);
   StaticJsonDocument<512> signedDoc;
@@ -72,11 +72,11 @@ bool verifySign(const std::string &pub,const std::string &sign,const std::string
   DUMP_S(pub);
   DUMP_S(sign);
   DUMP_S(sha);
-  int pubRet = decode_base64((unsigned char*)pub.c_str(),pub.size(),gBase64TempBinary);
+  int pubRet = my_decode_base64((unsigned char*)pub.c_str(),pub.size(),gBase64TempBinary);
   DUMP_I(pubRet);
   memcpy(gPublicKeyBinary,gBase64TempBinary,sizeof(gPublicKeyBinary));
   DUMP_H(gPublicKeyBinary,sizeof(gPublicKeyBinary));
-  int signRet = decode_base64((unsigned char*)sign.c_str(),sign.size(),gBase64TempBinary);
+  int signRet = my_decode_base64((unsigned char*)sign.c_str(),sign.size(),gBase64TempBinary);
   DUMP_I(signRet);
   memcpy(gSignBinary,gBase64TempBinary,signRet);
   DUMP_H(gSignBinary,signRet);
@@ -85,7 +85,7 @@ bool verifySign(const std::string &pub,const std::string &sign,const std::string
   unsigned long long signSize = signRet;
   int openRet = crypto_sign_open(gOpenedTempMsg,&mSize,gSignBinary,signSize,gPublicKeyBinary);
   if(openRet == 0){
-    int shaRet = encode_base64(gOpenedTempMsg,SHA512_HASH_BIN_MAX,gBase64TempBinary);
+    int shaRet = my_encode_base64(gOpenedTempMsg,SHA512_HASH_BIN_MAX,gBase64TempBinary);
     std::string shaOpened((char*)gBase64TempBinary,shaRet);
     if(shaOpened ==sha) {
       return true;
@@ -98,7 +98,7 @@ bool verifySign(const std::string &pub,const std::string &sign,const std::string
 bool isAuthedMessage(const JsonVariant &msg,const std::string &topic,const std::string &payloadStr) {
   auto hashRet = crypto_hash_sha512(gCalcTempHash,(unsigned char*)payloadStr.c_str(),payloadStr.size());
   DUMP_I(hashRet);
-  int shaRet = encode_base64(gCalcTempHash,SHA512_HASH_BIN_MAX,gBase64TempBinary);
+  int shaRet = my_encode_base64(gCalcTempHash,SHA512_HASH_BIN_MAX,gBase64TempBinary);
   DUMP_I(shaRet);
   std::string calHash((char*)gBase64TempBinary,shaRet);
   DUMP_S(calHash);
@@ -179,7 +179,7 @@ void miningAddress(void) {
     LOG_I(hashRet);
     LOG_H(mineSha512,sizeof(mineSha512));
     byte sha512B64[crypto_hash_sha512_BYTES*2] = {0};
-    int b64Ret1 = encode_base64(mineSha512,crypto_hash_sha512_BYTES,sha512B64);
+    int b64Ret1 = my_encode_base64(mineSha512,crypto_hash_sha512_BYTES,sha512B64);
     LOG_I(b64Ret1);
     std::string sha512B64Str((char*)sha512B64,b64Ret1);
     LOG_S(sha512B64Str);
@@ -199,14 +199,14 @@ void miningAddress(void) {
     }
   }
   byte publicKeyB64[crypto_sign_PUBLICKEYBYTES*2] = {0};
-  int b64Ret = encode_base64(publicKey,crypto_sign_PUBLICKEYBYTES,publicKeyB64);
+  int b64Ret = my_encode_base64(publicKey,crypto_sign_PUBLICKEYBYTES,publicKeyB64);
   LOG_I(b64Ret);
   std::string pubKeyB64((char*)publicKeyB64,b64Ret);
   LOG_S(pubKeyB64);
   
   LOG_H(secretKey,sizeof(secretKey));
   byte secretKeyB64[crypto_sign_SECRETKEYBYTES*2] = {0};
-  int b64Ret2 = encode_base64(secretKey,crypto_sign_SECRETKEYBYTES,secretKeyB64);
+  int b64Ret2 = my_encode_base64(secretKey,crypto_sign_SECRETKEYBYTES,secretKeyB64);
   LOG_I(b64Ret2);
   std::string secKeyB64((char*)secretKeyB64,b64Ret2);
   LOG_S(secKeyB64);

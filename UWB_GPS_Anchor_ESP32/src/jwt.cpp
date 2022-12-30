@@ -125,7 +125,7 @@ void connectJWT(void) {
   LOG_S(gSecretKey);
   preferences.end();
 
-  int b64Ret2 = decode_base64((byte*)(gSecretKey.c_str()),gSecretKey.length(),gSecretKeyBin);
+  int b64Ret2 = my_decode_base64((byte*)(gSecretKey.c_str()),gSecretKey.length(),gSecretKeyBin);
   LOG_H(gSecretKeyBin,sizeof(gSecretKeyBin));
 
   webSocket.begin(jwt_host.c_str(),(uint16_t)jwt_port,jwt_path.c_str());
