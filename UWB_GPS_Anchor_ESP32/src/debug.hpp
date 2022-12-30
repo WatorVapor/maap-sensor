@@ -1,17 +1,24 @@
 #pragma once
 
+#include <mutex>
+extern std::mutex print_mtx_;
+
 #if 0
 #define DUMP_I(x) { \
-  Serial.printf("[dump] %s::%d:%s=<%d>\r\n",__func__,__LINE__,#x,x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[dump] %s %s::%d:%s=<%d>\r\n",__func__,__FILE__,__LINE__,#x,x);\
 }
 #define DUMP_F(x) { \
-  Serial.printf("[dump] %s::%d:%s=<%f>\r\n",__func__,__LINE__,#x,x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[dump] %s %s::%d:%s=<%f>\r\n",__func__,__FILE__,__LINE__,#x,x);\
 }
 #define DUMP_S(x) { \
-  Serial.printf("[dump] %s::%d:%s=<%s>\r\n",__func__,__LINE__,#x,x.c_str());\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[dump] %s %s::%d:%s=<%s>\r\n",__func__,__FILE__,__LINE__,#x,x.c_str());\
 }
 #define DUMP_H(x,y) { \
-  Serial.printf("[dump] %s::%d:%s=<",__func__,__LINE__,#x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[dump] %s %s::%d:%s=<",__func__,__FILE__,__LINE__,#x);\
   for(int i = 0;i < y;i++) {\
     Serial.printf("%02x,",x[i]);\
   }\
@@ -26,22 +33,28 @@
 
 #if 1
 #define LOG_I(x) { \
-  Serial.printf("[log] %s::%d:%s=<%d>\r\n",__func__,__LINE__,#x,x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[log] %s %s::%d:%s=<%d>\r\n",__func__,__FILE__,__LINE__,#x,x);\
 }
 #define LOG_LL(x) { \
-  Serial.printf("[log] %s::%d:%s=<%ld>\r\n",__func__,__LINE__,#x,x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[log] %s %s::%d:%s=<%ld>\r\n",__func__,__FILE__,__LINE__,#x,x);\
 }
 #define LOG_F(x) { \
-  Serial.printf("[log] %s::%d:%s=<%f>\r\n",__func__,__LINE__,#x,x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[log] %s %s::%d:%s=<%f>\r\n",__func__,__FILE__,__LINE__,#x,x);\
 }
 #define LOG_S(x) { \
-  Serial.printf("[log] %s::%d:%s=<%s>\r\n",__func__,__LINE__,#x,x.c_str());\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[log] %s %s::%d:%s=<%s>\r\n",__func__,__FILE__,__LINE__,#x,x.c_str());\
 }
 #define LOG_SC(x) { \
-  Serial.printf("[log] %s::%d:%s=<%s>\r\n",__func__,__LINE__,#x,x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[log] %s %s::%d:%s=<%s>\r\n",__func__,__FILE__,__LINE__,#x,x);\
 }
 #define LOG_H(x,y) { \
-  Serial.printf("[log] %s::%d:%s=<",__func__,__LINE__,#x);\
+  std::lock_guard<std::mutex> lock(print_mtx_);\
+  Serial.printf("[log] %s %s::%d:%s=<",__func__,__FILE__,__LINE__,#x);\
   for(int i = 0;i < y;i++) {\
     Serial.printf("%02x,",x[i]);\
   }\

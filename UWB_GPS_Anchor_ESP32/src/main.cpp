@@ -4,6 +4,8 @@
 #include <list>
 #include "debug.hpp"
 
+void WifiMeshTask( void * parameter);
+void BLESettingTask( void * parameter);
 
 #define GPS_ Serial1
 #define UWB_ Serial2
@@ -26,8 +28,10 @@ void setup() {
   GPS_.begin(115200,SERIAL_8N1,GPS_RX_PIN,GPS_TX_PIN);
   UWB_.begin(115200,SERIAL_8N1,UWB_RX_PIN,UWB_TX_PIN);
 
-  xTaskCreatePinnedToCore(BLETask, "BLETask", 10000, nullptr, 1, nullptr,  1); 
-  xTaskCreatePinnedToCore(NetWorkTask, "NetWorkTask", 10000, nullptr, 1, nullptr,  1); 
+  Serial.println(__DATE__);
+  Serial.println(__TIME__);
+  xTaskCreatePinnedToCore(WifiMeshTask, "WifiMeshTask", 1024*10, nullptr, 1, nullptr,  0); 
+  xTaskCreatePinnedToCore(BLESettingTask, "BLESettingTask", 1024*10, nullptr, 1, nullptr,  0); 
 
   delay(5000);
   initUWB();
