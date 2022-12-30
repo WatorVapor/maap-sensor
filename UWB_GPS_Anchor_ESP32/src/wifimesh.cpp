@@ -284,7 +284,7 @@ void transimitGps2Mesh(void) {
       device2MeshLineBuffer.clear();
     }
     device2MeshLineBuffer.push_back(jsonBuff);
-    LOG_I(device2MeshLineBuffer.size());
+    DUMP_I(device2MeshLineBuffer.size());
     gGPSLineBuff.pop_front();
   }
 }
