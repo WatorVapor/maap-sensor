@@ -138,7 +138,10 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 #define CHARACTERISTIC_UUID_RX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
 void setupBLE(void) {
-  BLEDevice::init("ESP32 KOMATU");  // local name
+  std::string bleName("maap_esp32_");
+  bleName += std::string(mesh_address.c_str(),8);
+  LOG_S(bleName);
+  BLEDevice::init(bleName);  // local name
   pServer = BLEDevice::createServer();  // Create the BLE Device
   pServer->setCallbacks(new MyServerCallbacks());
   BLEService *pService = pServer->createService(SERVICE_UUID);
