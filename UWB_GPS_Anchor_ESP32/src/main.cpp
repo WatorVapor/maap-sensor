@@ -2,6 +2,8 @@
 #include <string>
 #include <mutex>
 #include <list>
+#include "FS.h"
+#include "SPIFFS.h"
 #include "debug.hpp"
 void WifiMeshTask( void * parameter);
 void BLESettingTask( void * parameter);
@@ -16,6 +18,10 @@ static const int GPS_RX_PIN = 26;
 static const int UWB_TX_PIN = 18; 
 static const int UWB_RX_PIN = 19; 
 
+void loadAddressConfig(void);
+void loadWifiMeshConfig(void);
+void loadUWBConfig(void);
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -25,6 +31,13 @@ void setup() {
 
   Serial.println(__DATE__);
   Serial.println(__TIME__);
+
+  SPIFFS.begin(true);
+  loadAddressConfig();
+  loadWifiMeshConfig();
+  loadUWBConfig();
+  SPIFFS.end();
+
   xTaskCreatePinnedToCore(WifiMeshTask, "WifiMeshTask", 1024*8, nullptr, 1, nullptr,  0); 
   xTaskCreatePinnedToCore(BLESettingTask, "BLESettingTask", 1024*8, nullptr, 1, nullptr,  0); 
 

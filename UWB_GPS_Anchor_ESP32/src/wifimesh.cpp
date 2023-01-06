@@ -85,9 +85,7 @@ void setup_wifi_mesh(void) {
 }
 
 
-static const std::string Prefix("/spiffs");
-static StaticJsonDocument<512> meshSavedoc;
-static StaticJsonDocument<512> meshReaddoc;
+
 
 
 static String mesh_address;
@@ -158,6 +156,10 @@ void miningMeshAddress(void) {
 }
 
 static std::string saveJsonBuff;
+static const std::string Prefix("/spiffs");
+static StaticJsonDocument<512> meshSavedoc;
+static StaticJsonDocument<512> meshReaddoc;
+
 void loadAddressConfig(void) {
   std::string address = Prefix + "/config.address.json";
   auto isExists =  SPIFFS.exists(address.c_str());
@@ -291,10 +293,6 @@ void transimitGps2Mesh(void) {
 
 
 void WifiMeshTask( void * parameter) {
-  SPIFFS.begin(true);
-  loadAddressConfig();
-  loadWifiMeshConfig();
-  SPIFFS.end();
   setup_wifi_mesh();
   while(true) {
     mesh.update();
