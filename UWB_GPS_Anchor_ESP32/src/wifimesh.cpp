@@ -13,9 +13,11 @@ extern "C" {
 #include "debug.hpp"
 
 
-static String mesh_prefix;
-static String mesh_password;
-static int16_t mesh_port;
+String mesh_prefix;
+String mesh_password;
+int16_t mesh_port;
+String mesh_address;
+
 
 static Scheduler userScheduler;
 static painlessMesh  mesh;
@@ -88,7 +90,6 @@ void setup_wifi_mesh(void) {
 
 
 
-static String mesh_address;
 static String mesh_pub_key;
 static String mesh_sec_key;
 

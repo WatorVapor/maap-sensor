@@ -47,23 +47,34 @@ static void sendOutBle(void) {
 }
 
 
+extern String mesh_prefix;
+extern String mesh_password;
+extern int16_t mesh_port;
+extern String mesh_address;
+extern int gUWBMode;
+extern int gUWBId;
+
+
 void readSettingInfo(StaticJsonDocument<512> &doc) {
-  if(doc.containsKey("motor")) {
-    auto motor = doc["motor"].as<int>();
-    LOG_I(motor);
-    bleOutputdoc.clear();
-    bleOutputdoc["motor"] = motor;
-    std::string outStr;
-    serializeJson(bleOutputdoc, outStr);
-    outStr += "\r\n";
-    LOG_S(outStr);
-    std::lock_guard<std::mutex> lock(gOutBleStrBuffMtx);
-    gOutBleStrBuff = outStr;
-  }
+  bleOutputdoc.clear();
+  bleOutputdoc["node"] = mesh_address;
+  bleOutputdoc["mesh"]["ssid"] = mesh_prefix;
+  bleOutputdoc["mesh"]["password"] = mesh_password;
+  bleOutputdoc["mesh"]["port"] = mesh_port;
+  bleOutputdoc["uwb"]["mode"] = gUWBMode;
+  bleOutputdoc["uwb"]["id"] = gUWBId;
+  std::string outStr;
+  serializeJson(bleOutputdoc, outStr);
+  outStr += "\r\n";
+  LOG_S(outStr);
+  std::lock_guard<std::mutex> lock(gOutBleStrBuffMtx);
+  gOutBleStrBuff = outStr;
 }
 
 void settingMesh(StaticJsonDocument<512> &doc) {
-  if(doc.containsKey("ssid")) {
+  if(doc.containsKey("ssid") && doc.containsKey("password")) {
+    auto ssidStr = doc["ssid"].as<std::string>();
+    auto passwordStr = doc["password"].as<std::string>();
   }
 }
 
@@ -82,6 +93,9 @@ void onExternalCommand(StaticJsonDocument<512> &doc) {
     if(settingStr == "mesh") {
       settingMesh(doc);
     }
+  }
+  if(doc.containsKey("info")) {
+    readSettingInfo(doc);
   }
 }
 

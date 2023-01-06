@@ -5,8 +5,8 @@
 #include "SPIFFS.h"
 
 
-static int gUWBMode;
-static int gUWBId;
+int gUWBMode;
+int gUWBId;
 void runUWBAtCommand(const std::string&At);
 
 static const std::string Prefix("/spiffs");
@@ -41,7 +41,7 @@ void loadUWBConfig(void) {
     }
   } else {
     uwbSavedoc.clear();
-    uwbSavedoc["mode"] = 0;
+    uwbSavedoc["mode"] = 1;
     uwbSavedoc["id"] = 0;
     uwbSavedoc.clear();
     serializeJson(uwbSavedoc, saveJsonBuff);
@@ -52,8 +52,8 @@ void loadUWBConfig(void) {
       fs.flush();
       fs.close();
     }
-    gUWBMode = 0;
-    gUWBId = 0;
+    gUWBMode = 1;
+    gUWBId = 10;
   }
   LOG_I(gUWBMode);
   LOG_I(gUWBId);
