@@ -103,6 +103,15 @@ void settingDevice(const StaticJsonDocument<512> &setting) {
   }
 }
 
+void runUWBAtCommand(const std::string&At);
+void execUWBCmd(const StaticJsonDocument<512> &uwb) {
+  if(uwb.containsKey("AT") ) {
+    auto ATStr = uwb["AT"].as<std::string>();
+    LOG_S(ATStr);
+    runUWBAtCommand(ATStr);
+  }
+}
+
 
 void onExternalCommand(StaticJsonDocument<512> &doc) {
   if(doc.containsKey("maap")) {
@@ -120,6 +129,10 @@ void onExternalCommand(StaticJsonDocument<512> &doc) {
   }
   if(doc.containsKey("info")) {
     readSettingInfo(doc);
+  }
+  if(doc.containsKey("uwb")) {
+    auto uwb = doc["uwb"];
+    execUWBCmd(uwb);
   }
 }
 
