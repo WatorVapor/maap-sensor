@@ -43,7 +43,7 @@ void loadUWBConfig(void) {
     uwbSavedoc.clear();
     uwbSavedoc["mode"] = 1;
     uwbSavedoc["id"] = 0;
-    uwbSavedoc.clear();
+    saveJsonBuff.clear();
     serializeJson(uwbSavedoc, saveJsonBuff);
     LOG_S(saveJsonBuff);
     auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
@@ -64,7 +64,7 @@ void storeUWBConfig(void) {
   uwbSavedoc.clear();
   uwbSavedoc["mode"] = gUWBMode;
   uwbSavedoc["id"] = gUWBId;
-  uwbSavedoc.clear();
+  saveJsonBuff.clear();
   serializeJson(uwbSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
   auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
