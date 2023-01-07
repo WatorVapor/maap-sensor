@@ -57,12 +57,12 @@ extern int gUWBId;
 
 void readSettingInfo(StaticJsonDocument<512> &doc) {
   bleOutputdoc.clear();
-  bleOutputdoc["node"] = mesh_address;
-  bleOutputdoc["mesh"]["ssid"] = mesh_prefix;
-  bleOutputdoc["mesh"]["password"] = mesh_password;
-  bleOutputdoc["mesh"]["port"] = mesh_port;
-  bleOutputdoc["uwb"]["mode"] = gUWBMode;
-  bleOutputdoc["uwb"]["id"] = gUWBId;
+  bleOutputdoc["info"]["node"] = mesh_address;
+  bleOutputdoc["info"]["mesh_wifi"]["ssid"] = mesh_prefix;
+  bleOutputdoc["info"]["mesh_wifi"]["password"] = mesh_password;
+  bleOutputdoc["info"]["mesh_wifi"]["port"] = mesh_port;
+  bleOutputdoc["info"]["uwb"]["mode"] = gUWBMode;
+  bleOutputdoc["info"]["uwb"]["id"] = gUWBId;
   std::string outStr;
   serializeJson(bleOutputdoc, outStr);
   outStr += "\r\n";
@@ -71,10 +71,26 @@ void readSettingInfo(StaticJsonDocument<512> &doc) {
   gOutBleStrBuff = outStr;
 }
 
-void settingMesh(StaticJsonDocument<512> &doc) {
-  if(doc.containsKey("ssid") && doc.containsKey("password")) {
-    auto ssidStr = doc["ssid"].as<std::string>();
-    auto passwordStr = doc["password"].as<std::string>();
+void settingDevice(const StaticJsonDocument<512> &setting) {
+  if(setting.containsKey("mesh_wifi")) {
+    auto mesh_wifi = setting["mesh_wifi"];
+    if(mesh_wifi.containsKey("ssid") && mesh_wifi.containsKey("password") && mesh_wifi.containsKey("port")) {
+      auto ssidStr = mesh_wifi["ssid"].as<std::string>();
+      auto passwordStr = mesh_wifi["password"].as<std::string>();
+      auto port = mesh_wifi["port"].as<int16_t>();
+      LOG_S(ssidStr);
+      LOG_S(passwordStr);
+      LOG_I(port);
+    }
+  }
+  if(setting.containsKey("uwb")) {
+    auto uwb = setting["uwb"];
+    if(uwb.containsKey("mode") && uwb.containsKey("id")) {
+      auto mode = uwb["mode"].as<int32_t>();
+      auto id = uwb["id"].as<int32_t>();
+      LOG_I(mode);
+      LOG_I(id);
+    }
   }
 }
 
@@ -86,13 +102,12 @@ void onExternalCommand(StaticJsonDocument<512> &doc) {
     if(isMaap == false) {
       return;
     }
+  } else {
+    return;
   }
   if(doc.containsKey("setting")) {
-    auto settingStr = doc["setting"].as<std::string>();
-    LOG_S(settingStr);
-    if(settingStr == "mesh") {
-      settingMesh(doc);
-    }
+    auto setting = doc["setting"];
+    settingDevice(setting);
   }
   if(doc.containsKey("info")) {
     readSettingInfo(doc);
