@@ -211,6 +211,8 @@ void loadAddressConfig(void) {
       } else {
         createEmptyAddress(address);
       }
+    } else {
+      createEmptyAddress(address);
     }
   } else {
     createEmptyAddress(address);
@@ -274,6 +276,8 @@ void loadWifiMeshConfig(void) {
       } else {
         createEmptyWifiMesh(settings);
       }
+    } else {
+      createEmptyWifiMesh(settings);
     }
   } else {
     createEmptyWifiMesh(settings);

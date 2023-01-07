@@ -15,6 +15,23 @@ static StaticJsonDocument<512> uwbSavedoc;
 static StaticJsonDocument<512> uwbReaddoc;
 static std::string saveJsonBuff;
 
+void createEmptyUWB(const std::string &address) {
+  uwbSavedoc.clear();
+  uwbSavedoc["mode"] = 1;
+  uwbSavedoc["id"] = 10;
+  saveJsonBuff.clear();
+  serializeJson(uwbSavedoc, saveJsonBuff);
+  LOG_S(saveJsonBuff);
+  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
+  if(fs.available()) {
+    fs.print(saveJsonBuff.c_str());
+    fs.flush();
+    fs.close();
+  }
+  gUWBMode = 1;
+  gUWBId = 10;
+}
+
 void loadUWBConfig(void) {
   std::string address = Prefix + "/config.uwb.json";
   auto isExists =  SPIFFS.exists(address.c_str());
@@ -23,7 +40,7 @@ void loadUWBConfig(void) {
     if(fp){
       const int fileSize = fp.size();
       LOG_I(fileSize);
-      if(fileSize < 512) {
+      if(fileSize > 0 && fileSize < 512) {
         char buff[fileSize];
         auto readSize = fp.readBytes(buff,fileSize);
         LOG_I(readSize);
@@ -37,24 +54,17 @@ void loadUWBConfig(void) {
           if(uwbReaddoc.containsKey("id")) {
             gUWBId = uwbReaddoc["id"].as<int>();
           }
+        } else {
+          createEmptyUWB(address);
         }
+      } else {
+        createEmptyUWB(address);
       }
+    } else {
+      createEmptyUWB(address);
     }
   } else {
-    uwbSavedoc.clear();
-    uwbSavedoc["mode"] = 1;
-    uwbSavedoc["id"] = 0;
-    saveJsonBuff.clear();
-    serializeJson(uwbSavedoc, saveJsonBuff);
-    LOG_S(saveJsonBuff);
-    auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
-    if(fs.available()) {
-      fs.print(saveJsonBuff.c_str());
-      fs.flush();
-      fs.close();
-    }
-    gUWBMode = 1;
-    gUWBId = 10;
+    createEmptyUWB(address);
   }
   LOG_I(gUWBMode);
   LOG_I(gUWBId);
