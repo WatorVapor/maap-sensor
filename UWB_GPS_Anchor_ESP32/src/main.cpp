@@ -25,7 +25,7 @@ void loadUWBConfig(void);
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  Serial.println("UWB GPS Anchor start");
+  Serial.println("UWB GPS device start");
   GPS_.begin(115200,SERIAL_8N1,GPS_RX_PIN,GPS_TX_PIN);
   UWB_.begin(115200,SERIAL_8N1,UWB_RX_PIN,UWB_TX_PIN);
 

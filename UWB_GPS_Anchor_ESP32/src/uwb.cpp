@@ -69,10 +69,13 @@ void storeUWBConfig(void) {
   serializeJson(uwbSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
   auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
+  LOG_I(fs.available());
   if(fs.available()) {
     fs.print(saveJsonBuff.c_str());
     fs.flush();
     fs.close();
+  } else {
+    LOG_SC(fs.name());
   }
   SPIFFS.end();
 }
@@ -81,49 +84,57 @@ void storeUWBConfig(void) {
 #define UWB_ Serial2
 #define UART_DIR_UWB 1
 
-void initUWB(void) {
-  std::string startCmd("AT\r\n");
-  UWB_.print(startCmd.c_str());
-  delay(1000);
+
+static void readOutUWB(void) {
   while(UWB_.available()) {
     auto ch = UWB_.read();
 #ifdef UART_DIR_UWB
     Serial.write(ch);
 #endif
+  }
+}
+
+void initUWB(void) {
+  {
+    std::string cmd("AT+RST\r\n");
+    LOG_S(cmd);
+    UWB_.print(cmd.c_str());
+    delay(1000);
+    readOutUWB();
+  }
+  {
+    std::string cmd("AT+version?\r\n");
+    LOG_S(cmd);
+    UWB_.print(cmd.c_str());
+    delay(1000);
+    readOutUWB();
+  }
+  {
+    std::string mode("AT+anchor_tag=");
+    mode += std::to_string(gUWBMode);
+    mode += ",";
+    mode += std::to_string(gUWBId);
+    mode += "\r\n";
+    LOG_S(mode);
+    UWB_.print(mode.c_str());
+    delay(1000);
+    readOutUWB();
   }
 
-  std::string mode("AT+anchor_tag=");
-  mode += std::to_string(gUWBMode);
-  mode += ",";
-  mode += std::to_string(gUWBId);
-  mode += "\r\n";
-  LOG_S(mode);
-  UWB_.print(mode.c_str());
-  delay(1000);
-  while(UWB_.available()) {
-    auto ch = UWB_.read();
-#ifdef UART_DIR_UWB
-    Serial.write(ch);
-#endif
-  }
+
   if(gUWBMode == 0) {
-    UWB_.print("AT+interval=1\r\n");
-    while(UWB_.available()) {
-        auto ch = UWB_.read();
-    #ifdef UART_DIR_UWB
-        Serial.write(ch);
-    #endif
-    }
-    delay(2000);
-    UWB_.print("AT+switchdis=1\r\n");
+    std::string cmd("AT+interval=5\r\n");
+    LOG_S(cmd);
+    UWB_.print(cmd.c_str());
+    delay(1000);
+    readOutUWB();
+    std::string cmd2("AT+switchdis=1\r\n");
+    LOG_S(cmd2);
+    UWB_.print(cmd2.c_str());
   } else {
-    UWB_.print("AT+switchdis=0\r\n");
+    std::string cmd2("AT+switchdis=0\r\n");
+    LOG_S(cmd2);
+    UWB_.print(cmd2.c_str());
   }
-  delay(1000);
-  while(UWB_.available()) {
-    auto ch = UWB_.read();
-#ifdef UART_DIR_UWB
-    Serial.write(ch);
-#endif
-  }
+  readOutUWB();
 }

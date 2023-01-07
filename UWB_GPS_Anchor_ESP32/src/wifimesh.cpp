@@ -161,6 +161,25 @@ static const std::string Prefix("/spiffs");
 static StaticJsonDocument<512> meshSavedoc;
 static StaticJsonDocument<512> meshReaddoc;
 
+void createEmptyAddress(const std::string &address) {
+  miningMeshAddress();
+  meshSavedoc.clear();
+  meshSavedoc["address"] = mining_address;
+  meshSavedoc["pub"] = mining_pub_key;
+  meshSavedoc["sec"] = mining_sec_key;
+  saveJsonBuff.clear();
+  serializeJson(meshSavedoc, saveJsonBuff);
+  LOG_S(saveJsonBuff);
+  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
+  if(fs.available()) {
+    fs.print(saveJsonBuff.c_str());
+    fs.flush();
+    fs.close();
+  }
+  mesh_address = mining_address;
+  mesh_pub_key = mining_pub_key;
+  mesh_sec_key = mining_sec_key;
+}
 void loadAddressConfig(void) {
   std::string address = Prefix + "/config.address.json";
   auto isExists =  SPIFFS.exists(address.c_str());
@@ -169,7 +188,7 @@ void loadAddressConfig(void) {
     if(fp){
       const int fileSize = fp.size();
       LOG_I(fileSize);
-      if(fileSize < 512) {
+      if(fileSize > 0 &&fileSize < 512) {
         char buff[fileSize];
         auto readSize = fp.readBytes(buff,fileSize);
         LOG_I(readSize);
@@ -186,27 +205,15 @@ void loadAddressConfig(void) {
           if(meshReaddoc.containsKey("sec")) {
            mesh_sec_key = String(meshReaddoc["sec"].as<String>());
           }
+        } else {
+          createEmptyAddress(address);
         }
+      } else {
+        createEmptyAddress(address);
       }
     }
   } else {
-    miningMeshAddress();
-    meshSavedoc.clear();
-    meshSavedoc["address"] = mining_address;
-    meshSavedoc["pub"] = mining_pub_key;
-    meshSavedoc["sec"] = mining_sec_key;
-    saveJsonBuff.clear();
-    serializeJson(meshSavedoc, saveJsonBuff);
-    LOG_S(saveJsonBuff);
-    auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
-    if(fs.available()) {
-      fs.print(saveJsonBuff.c_str());
-      fs.flush();
-      fs.close();
-    }
-    mesh_address = mining_address;
-    mesh_pub_key = mining_pub_key;
-    mesh_sec_key = mining_sec_key;
+    createEmptyAddress(address);
   }
   LOG_S(mesh_address);
   LOG_S(mesh_pub_key);
@@ -217,6 +224,25 @@ void loadAddressConfig(void) {
 #define   MESH_PASSWORD   "Fqji4aPp"
 #define   MESH_PORT       5555
 
+void createEmptyWifiMesh(const std::string &settings) {
+  meshSavedoc.clear();
+  meshSavedoc["ssid"] = MESH_PREFIX;
+  meshSavedoc["password"] = MESH_PASSWORD;
+  meshSavedoc["port"] = MESH_PORT;
+  saveJsonBuff.clear();
+  serializeJson(meshSavedoc, saveJsonBuff);
+  LOG_S(saveJsonBuff);
+  auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
+  if(fs.available()) {
+    fs.print(saveJsonBuff.c_str());
+    fs.flush();
+    fs.close();
+  }
+  mesh_prefix = MESH_PREFIX;
+  mesh_password = MESH_PASSWORD;
+  mesh_port = MESH_PORT;
+}
+
 void loadWifiMeshConfig(void) {
   std::string settings = Prefix + "/config.wifi.mesh.json";
   auto isExists =  SPIFFS.exists(settings.c_str());
@@ -225,7 +251,7 @@ void loadWifiMeshConfig(void) {
     if(fp){
       const int fileSize = fp.size();
       LOG_I(fileSize);
-      if(fileSize < 512) {
+      if( fileSize > 0 && fileSize < 512) {
         char buff[fileSize];
         auto readSize = fp.readBytes(buff,fileSize);
         LOG_I(readSize);
@@ -242,26 +268,15 @@ void loadWifiMeshConfig(void) {
           if(meshReaddoc.containsKey("port")) {
            mesh_port = meshReaddoc["port"].as<int>();
           }
+        } else {
+          createEmptyWifiMesh(settings);
         }
+      } else {
+        createEmptyWifiMesh(settings);
       }
     }
   } else {
-    meshSavedoc.clear();
-    meshSavedoc["ssid"] = MESH_PREFIX;
-    meshSavedoc["password"] = MESH_PASSWORD;
-    meshSavedoc["port"] = MESH_PORT;
-    saveJsonBuff.clear();
-    serializeJson(meshSavedoc, saveJsonBuff);
-    LOG_S(saveJsonBuff);
-    auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
-    if(fs.available()) {
-      fs.print(saveJsonBuff.c_str());
-      fs.flush();
-      fs.close();
-    }
-    mesh_prefix = MESH_PREFIX;
-    mesh_password = MESH_PASSWORD;
-    mesh_port = MESH_PORT;
+    createEmptyWifiMesh(settings);
   }
 }
 void storeWifiMeshConfig(void) {
@@ -275,10 +290,13 @@ void storeWifiMeshConfig(void) {
   serializeJson(meshSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
   auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
+  LOG_I(fs.available());
   if(fs.available()) {
     fs.print(saveJsonBuff.c_str());
     fs.flush();
     fs.close();
+  } else {
+    LOG_SC(fs.name());
   }
   SPIFFS.end();
 
