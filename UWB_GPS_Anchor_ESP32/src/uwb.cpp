@@ -58,6 +58,25 @@ void loadUWBConfig(void) {
   LOG_I(gUWBMode);
   LOG_I(gUWBId);
 }
+void storeUWBConfig(void) {
+  SPIFFS.begin(true);
+  std::string address = Prefix + "/config.uwb.json";
+  uwbSavedoc.clear();
+  uwbSavedoc["mode"] = gUWBMode;
+  uwbSavedoc["id"] = gUWBId;
+  uwbSavedoc.clear();
+  serializeJson(uwbSavedoc, saveJsonBuff);
+  LOG_S(saveJsonBuff);
+  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
+  if(fs.available()) {
+    fs.print(saveJsonBuff.c_str());
+    fs.flush();
+    fs.close();
+  }
+  SPIFFS.end();
+}
+
+
 #define UWB_ Serial2
 void initUWB(void) {
   std::string mode("AT+anchor_tag=");

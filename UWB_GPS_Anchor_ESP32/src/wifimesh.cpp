@@ -264,7 +264,25 @@ void loadWifiMeshConfig(void) {
     mesh_port = MESH_PORT;
   }
 }
+void storeWifiMeshConfig(void) {
+  SPIFFS.begin(true);
+  std::string settings = Prefix + "/config.wifi.mesh.json";
+  meshSavedoc.clear();
+  meshSavedoc["ssid"] = mesh_prefix;
+  meshSavedoc["password"] = mesh_password;
+  meshSavedoc["port"] = mesh_port;
+  saveJsonBuff.clear();
+  serializeJson(meshSavedoc, saveJsonBuff);
+  LOG_S(saveJsonBuff);
+  auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
+  if(fs.available()) {
+    fs.print(saveJsonBuff.c_str());
+    fs.flush();
+    fs.close();
+  }
+  SPIFFS.end();
 
+}
 extern std::mutex gGpsLineMtx;
 extern std::list <std::string> gGPSLineBuff;
 

@@ -53,6 +53,8 @@ extern int16_t mesh_port;
 extern String mesh_address;
 extern int gUWBMode;
 extern int gUWBId;
+void storeWifiMeshConfig(void);
+void storeUWBConfig(void);
 
 
 void readSettingInfo(StaticJsonDocument<512> &doc) {
@@ -78,9 +80,13 @@ void settingDevice(const StaticJsonDocument<512> &setting) {
       auto ssidStr = mesh_wifi["ssid"].as<std::string>();
       auto passwordStr = mesh_wifi["password"].as<std::string>();
       auto port = mesh_wifi["port"].as<int16_t>();
+      mesh_prefix = String(ssidStr.c_str());
+      mesh_password = String(passwordStr.c_str());
+      mesh_port = port;
       LOG_S(ssidStr);
       LOG_S(passwordStr);
       LOG_I(port);
+      storeWifiMeshConfig();
     }
   }
   if(setting.containsKey("uwb")) {
@@ -90,6 +96,9 @@ void settingDevice(const StaticJsonDocument<512> &setting) {
       auto id = uwb["id"].as<int32_t>();
       LOG_I(mode);
       LOG_I(id);
+      gUWBMode = mode;
+      gUWBId = id;
+      storeUWBConfig();
     }
   }
 }
