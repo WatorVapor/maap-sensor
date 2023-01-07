@@ -46,7 +46,6 @@ void setup() {
 }
 
 
-bool isPreferenceAllow = false;
 
 static const int iConstGPSLineMax = 1024;
 static std::string gpsLine;
@@ -124,6 +123,5 @@ void loop() {
       gUWBAtCmdBuff.pop_front();
     }
   }
-  isPreferenceAllow = true;
 }
 std::mutex print_mtx_;

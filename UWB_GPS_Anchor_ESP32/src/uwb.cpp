@@ -79,7 +79,19 @@ void storeUWBConfig(void) {
 
 
 #define UWB_ Serial2
+#define UART_DIR_UWB 1
+
 void initUWB(void) {
+  std::string startCmd("AT\r\n");
+  UWB_.print(startCmd.c_str());
+  delay(1000);
+  while(UWB_.available()) {
+    auto ch = UWB_.read();
+#ifdef UART_DIR_UWB
+    Serial.write(ch);
+#endif
+  }
+
   std::string mode("AT+anchor_tag=");
   mode += std::to_string(gUWBMode);
   mode += ",";
@@ -87,12 +99,31 @@ void initUWB(void) {
   mode += "\r\n";
   LOG_S(mode);
   UWB_.print(mode.c_str());
-  delay(5000);
+  delay(1000);
+  while(UWB_.available()) {
+    auto ch = UWB_.read();
+#ifdef UART_DIR_UWB
+    Serial.write(ch);
+#endif
+  }
   if(gUWBMode == 0) {
     UWB_.print("AT+interval=1\r\n");
+    while(UWB_.available()) {
+        auto ch = UWB_.read();
+    #ifdef UART_DIR_UWB
+        Serial.write(ch);
+    #endif
+    }
     delay(2000);
     UWB_.print("AT+switchdis=1\r\n");
   } else {
     UWB_.print("AT+switchdis=0\r\n");
+  }
+  delay(1000);
+  while(UWB_.available()) {
+    auto ch = UWB_.read();
+#ifdef UART_DIR_UWB
+    Serial.write(ch);
+#endif
   }
 }
