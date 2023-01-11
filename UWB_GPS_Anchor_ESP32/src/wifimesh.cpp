@@ -170,9 +170,9 @@ void createEmptyAddress(const std::string &address) {
   saveJsonBuff.clear();
   serializeJson(meshSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
-  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
-  if(fs.available()) {
-    fs.print(saveJsonBuff.c_str());
+  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE,true);
+  if(fs) {
+    fs.write((const uint8_t *)saveJsonBuff.c_str(),saveJsonBuff.size());
     fs.flush();
     fs.close();
   }
@@ -234,11 +234,14 @@ void createEmptyWifiMesh(const std::string &settings) {
   saveJsonBuff.clear();
   serializeJson(meshSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
-  auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
-  if(fs.available()) {
-    fs.print(saveJsonBuff.c_str());
+  auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE,true);
+  if(fs) {
+    fs.write((const uint8_t*)saveJsonBuff.c_str(),saveJsonBuff.size());
     fs.flush();
     fs.close();
+  } else {
+    LOG_SC(fs.name());
+    LOG_I(fs.getWriteError());
   }
   mesh_prefix = MESH_PREFIX;
   mesh_password = MESH_PASSWORD;
@@ -246,7 +249,7 @@ void createEmptyWifiMesh(const std::string &settings) {
 }
 
 void loadWifiMeshConfig(void) {
-  std::string settings = Prefix + "/config.wifi.mesh.json";
+  std::string settings = Prefix + "/config.wifi_mesh.json";
   auto isExists =  SPIFFS.exists(settings.c_str());
   if(isExists) {
     File fp = SPIFFS.open(settings.c_str(),FILE_READ);
@@ -284,8 +287,9 @@ void loadWifiMeshConfig(void) {
   }
 }
 void storeWifiMeshConfig(void) {
-  SPIFFS.begin(true);
-  std::string settings = Prefix + "/config.wifi.mesh.json";
+  auto fsResult = SPIFFS.begin(true);
+  LOG_I(fsResult);
+  std::string settings = Prefix + "/config.wifi_mesh.json";
   meshSavedoc.clear();
   meshSavedoc["ssid"] = mesh_prefix;
   meshSavedoc["password"] = mesh_password;
@@ -293,14 +297,14 @@ void storeWifiMeshConfig(void) {
   saveJsonBuff.clear();
   serializeJson(meshSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
-  auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE);
-  LOG_I(fs.available());
-  if(fs.available()) {
-    fs.print(saveJsonBuff.c_str());
+  auto fs = SPIFFS.open(settings.c_str(),FILE_WRITE,true);
+  if(fs) {
+    fs.write((const uint8_t*)saveJsonBuff.c_str(),saveJsonBuff.size());
     fs.flush();
     fs.close();
   } else {
     LOG_SC(fs.name());
+    LOG_I(fs.getWriteError());
   }
   SPIFFS.end();
 

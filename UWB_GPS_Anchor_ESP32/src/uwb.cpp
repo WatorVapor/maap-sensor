@@ -22,11 +22,14 @@ void createEmptyUWB(const std::string &address) {
   saveJsonBuff.clear();
   serializeJson(uwbSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
-  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
-  if(fs.available()) {
-    fs.print(saveJsonBuff.c_str());
+  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE,true);
+  if(fs) {
+    fs.write((const uint8_t*)saveJsonBuff.c_str(),saveJsonBuff.size());
     fs.flush();
     fs.close();
+  } else {
+    LOG_SC(fs.name());
+    LOG_I(fs.getWriteError());
   }
   gUWBMode = 1;
   gUWBId = 10;
@@ -70,7 +73,8 @@ void loadUWBConfig(void) {
   LOG_I(gUWBId);
 }
 void storeUWBConfig(void) {
-  SPIFFS.begin(true);
+  auto fsResult = SPIFFS.begin(true);
+  LOG_I(fsResult);
   std::string address = Prefix + "/config.uwb.json";
   uwbSavedoc.clear();
   uwbSavedoc["mode"] = gUWBMode;
@@ -78,14 +82,14 @@ void storeUWBConfig(void) {
   saveJsonBuff.clear();
   serializeJson(uwbSavedoc, saveJsonBuff);
   LOG_S(saveJsonBuff);
-  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE);
-  LOG_I(fs.available());
-  if(fs.available()) {
-    fs.print(saveJsonBuff.c_str());
+  auto fs = SPIFFS.open(address.c_str(),FILE_WRITE,true);
+  if(fs) {
+    fs.write((const uint8_t*)saveJsonBuff.c_str(),saveJsonBuff.size());
     fs.flush();
     fs.close();
   } else {
     LOG_SC(fs.name());
+    LOG_I(fs.getWriteError());
   }
   SPIFFS.end();
 }

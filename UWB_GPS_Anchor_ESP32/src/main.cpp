@@ -32,7 +32,12 @@ void setup() {
   Serial.println(__DATE__);
   Serial.println(__TIME__);
 
-  SPIFFS.begin(true);
+  auto result = SPIFFS.begin(true);
+  LOG_I(result);
+/*
+  result = SPIFFS.format();
+  LOG_I(result);
+*/
   loadAddressConfig();
   loadWifiMeshConfig();
   loadUWBConfig();
